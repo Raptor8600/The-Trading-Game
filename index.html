@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trading Game Simulator</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <header>
+        <h1>💼 Trading Game Simulator</h1>
+        <p class="subtext">Try to outsmart AI traders. Spot bluffs. Profit from misquotes.</p>
+    </header>
+
+    <main>
+        <!-- Difficulty Select -->
+        <section id="difficultySection">
+            <h2>Select Difficulty</h2>
+            <div class="difficulty-buttons">
+                <button class="diff-btn" id="easyBtn" onclick="setDifficulty('easy')">Easy</button>
+                <button class="diff-btn" id="mediumBtn" onclick="setDifficulty('medium')">Medium</button>
+                <button class="diff-btn" id="hardBtn" onclick="setDifficulty('hard')">Hard</button>
+            </div>
+            <button class="start-btn" onclick="startGame()">▶️ Start Game</button>
+        </section>
+
+        <!-- Game Interface -->
+        <section id="gameArea" style="display: none;">
+            <div class="top-bar">
+                <div id="scoreDisplay">Score: 0 | Round 1/5</div>
+                <button id="soundToggle" onclick="toggleSound()">🔊 Sound On</button>
+            </div>
+
+            <div class="card-display">
+                <p>Your card:</p>
+                <div class="card" id="yourCard">?</div>
+                <button onclick="showHint()">💡 Hint</button>
+            </div>
+
+            <div class="quote-input">
+                <label for="bid">Your Bid:</label>
+                <input type="number" id="bid" placeholder="e.g. 55" />
+                <label for="ask">Your Ask:</label>
+                <input type="number" id="ask" placeholder="e.g. 60" />
+                <button onclick="submitQuote()">📩 Submit Quote</button>
+            </div>
+
+            <div class="ai-quotes">
+                <h3>Market Quotes:</h3>
+                <ul id="aiQuotes"></ul>
+            </div>
+
+            <div id="result" class="result-box"></div>
+
+            <div class="tutorial-box">
+                <h3>📘 How the Game Works</h3>
+
+                <p>
+                    This game is based on a real-life trading simulation used to identify talent at top banks.
+                    One player famously won the national competition by studying the math, spotting bluffers, and
+                    quoting fearlessly. No suits. No finance degree. Just numbers and nerve.
+                </p>
+
+                <h4>🎴 The Setup</h4>
+                <ul>
+                    <li>There are 17 cards total: <strong>-10, 1–15, and 20</strong>.</li>
+                    <li>You’re dealt one secret card. Three cards go face down in the center.</li>
+                    <li>Five players total: you and four AI traders.</li>
+                </ul>
+
+                <h4>🎯 The Goal</h4>
+                <p>
+                    Quote a two-way price: a <strong>bid–ask spread</strong>. If your <em>bid</em> is below someone’s
+                    <em>ask</em>,
+                    or your <em>ask</em> is above someone’s <em>bid</em>, you profit.
+                </p>
+
+                <p><code>Example: 58–60 means “I’ll buy at 58 and sell at 60.”</code></p>
+
+                <h4>📐 The Math</h4>
+                <ul>
+                    <li>Average card value = <strong>7.65</strong>.</li>
+                    <li>There are 8 cards in play → average total ≈ <strong>61.2</strong>.</li>
+                    <li>Your own card gives you inside info: high cards suggest a high market total.</li>
+                </ul>
+
+                <p>
+                    A precise quote might give away your card. Can you trade without revealing your hand?
+                </p>
+
+                <h4>🧠 Bluffing & Psychology</h4>
+                <ul>
+                    <li>Some AI are honest. Some will bluff hard.</li>
+                    <li>Overconfidence? Tight spreads? Strange pauses? Pay attention.</li>
+                    <li>Click 💡 <strong>Hint</strong> to get a suggestion based on your card value.</li>
+                </ul>
+
+                <h4>💰 Strategy</h4>
+                <p>
+                    Trade between others. If one player quotes 52–54 and another says 66–68, you can buy low and sell
+                    high.
+                    <br><br>
+                    <strong>Arbitrage = risk-free profit.</strong> That’s how real markets work — and how you win here.
+                </p>
+
+                <p>
+                    Score points over 5 rounds. Adapt to the table. Outsmart the AI.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Sounds -->
+    <audio id="clickSound" src="click.mp3" preload="auto"></audio>
+    <audio id="successSound" src="success.mp3" preload="auto"></audio>
+
+    <script src="game.js"></script>
+</body>
+
+</html>
