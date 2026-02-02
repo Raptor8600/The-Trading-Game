@@ -162,6 +162,44 @@ OR
 Use this URL: https://raptor8600.github.io/The-Trading-Game/
 
 ────────────────────────────────
+🧭 HOW TO PLAY (REAL EXAMPLE)
+────────────────────────────────
+Let’s say your card is **15** (very high). You expect the total market value to be high.
+
+You look at the other players’ quotes:
+
+• Todd: 59–63 → Seems steady, might be bluffing
+• Marcus: 41–45 → Honest or weak card
+• Sam: 64–68 → Strong quote, maybe not bluffing
+
+🎯 What’s the move?
+
+You can:
+- **Buy from Marcus at 45** (his ask)
+- **Sell to Sam at 64** (his bid)
+
+That’s an **arbitrage** profit of 19 points.
+
+✅ Your quote should be:
+  • Bid: 45 (so Marcus will sell to you)
+  • Ask: 64 (so Sam will buy from you)
+
+Put in:
+  45–64
+
+Then click **Submit Quote**.
+
+If the game is working, you’ll win this round and see your profit.
+
+💡 Remember:
+  • Bluffing works both ways — some AI will fake confidence.
+  • Use the Hint button to explain the math.
+  • Watch the quotes and match them to the narration.
+
+Practice makes perfect.
+
+
+────────────────────────────────
 📖 FINAL NOTE
 ────────────────────────────────
 This game is not about being right.

@@ -1,4 +1,4 @@
-// ============ CONFIG ============ //
+// ==== Constants & Initial Setup ====
 const DECK = [-10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20];
 const DECK_AVG = 7.65;
 const BASE_EXPECTED_TOTAL = 61.2;
@@ -8,107 +8,105 @@ let yourCard = null;
 let aiPlayers = [];
 let currentRound = 1;
 const totalRounds = 5;
-let difficulty = "medium";
+let difficulty = "";
 let yourScore = 0;
-let clickSound, successSound;
-let soundEnabled = true;
+let playerName = "You";
 
-// ============ UTILITIES ============ //
+// ==== Audio ====
+const clickSound = new Audio("click.mp3");
+const successSound = new Audio("success.mp3");
+let soundMuted = false;
+
+function playClick() {
+    if (!soundMuted) clickSound.play();
+}
+
+function playSuccess() {
+    if (!soundMuted) successSound.play();
+}
+
+// ==== AI Player Logic ====
+
+function createAI(name, card, difficulty = "medium") {
+    const isBluffing = Math.random() < (difficulty === "hard" ? 0.7 : difficulty === "easy" ? 0.2 : 0.4);
+    const base = BASE_EXPECTED_TOTAL - DECK_AVG + card;
+    let adjusted = base;
+
+    if (isBluffing) {
+        // Bluffing logic: high cards quote low, low cards quote high
+        adjusted = base + (card > 10 ? -6 : card < 5 ? 6 : (Math.random() - 0.5) * 4);
+    }
+
+    const bid = Math.floor(adjusted - 2);
+    const ask = Math.floor(adjusted + 2);
+
+    const narrationTemplates = isBluffing ? [
+        `${name} quickly says ${bid}–${ask}. You think: “Too smooth. They might be bluffing.”`,
+        `${name} posts ${bid}–${ask}. Their voice is steady, but something feels off.`,
+        `${name} says ${bid}–${ask}. You wonder: "Too clean to be real?"`
+    ] : [
+        `${name} says ${bid}–${ask}. Sounds like they're just doing math.`,
+        `${name} shrugs and offers ${bid}–${ask}. Honest?`,
+        `${name} mumbles ${bid}–${ask}. Not sure they’re hiding anything.`
+    ];
+
+    return {
+        name,
+        bid,
+        ask,
+        card,
+        bluffing: isBluffing,
+        strategy: isBluffing ? "bluffing" : "straight",
+        narration: () => narrationTemplates[Math.floor(Math.random() * narrationTemplates.length)],
+        memory: []
+    };
+}
+
+// ==== Game Logic ====
+
 function shuffle(deck) {
     return [...deck].sort(() => Math.random() - 0.5);
 }
 
-function playSound(sound) {
-    if (soundEnabled && sound) sound.play();
-}
-
-// ============ AI GENERATOR ============ //
-function createAI(name, card, difficulty) {
-    const expected = BASE_EXPECTED_TOTAL - DECK_AVG + card;
-    let bluffing = false;
-    let bid, ask;
-
-    if (difficulty === "easy") {
-        bid = Math.floor(expected - 1);
-        ask = Math.floor(expected + 1);
-        bluffing = false;
-    } else if (difficulty === "hard") {
-        bluffing = Math.random() < 0.6; // 60% chance to bluff
-        let adjusted = expected;
-
-        if (card <= 5) adjusted += 5;
-        if (card >= 13) adjusted -= 5;
-        adjusted += (Math.random() - 0.5) * 4;
-
-        if (bluffing) {
-            adjusted += (Math.random() < 0.5 ? -6 : 6);
-        }
-
-        bid = Math.floor(adjusted - 2);
-        ask = Math.floor(adjusted + 2);
-    } else {
-        // Medium (mix of easy + hard)
-        return Math.random() < 0.5
-            ? createAI(name, card, "easy")
-            : createAI(name, card, "hard");
-    }
-
-    return {
-        name,
-        card,
-        bid,
-        ask,
-        strategy: difficulty,
-        bluffing,
-        narration() {
-            const thoughts = [
-                `${name} blurts out ${bid}–${ask}.<br><em>You think: “That was too fast. Are they just playing math?”</em>`,
-                `${name} calmly offers ${bid}–${ask}.<br><em>You think: “That tone was suspiciously neutral.”</em>`,
-                `${name} smiles and says ${bid}–${ask}.<br><em>Your gut says: “They're trying to bait me.”</em>`,
-                `${name} mutters ${bid}–${ask}.<br><em>You wonder: “Did they even look at their card?”</em>`,
-                `${name} confidently posts ${bid}–${ask}.<br><em>You note: “Feels a little too confident. Could be a bluff.”</em>`,
-                `${name} hesitates, then says ${bid}–${ask}.<br><em>Your instinct: “That hesitation gave them away.”</em>`,
-                `${name} shrugs and says ${bid}–${ask}.<br><em>You think: “Nonchalance? Or just randomness?”</em>`,
-                `${name} declares ${bid}–${ask}.<br><em>You analyze: “The range is wide. Defensive move?”</em>`,
-                `${name} quietly says ${bid}–${ask}.<br><em>You observe: “Feels honest. But maybe that’s the trick.”</em>`
-            ];
-            return thoughts[Math.floor(Math.random() * thoughts.length)];
-        }
-    };
-}
-
-// ============ GAME FLOW ============ //
 function startGame() {
-    clickSound = document.getElementById("clickSound");
-    successSound = document.getElementById("successSound");
+    const inputName = document.getElementById("playerName").value.trim();
+    if (inputName) playerName = inputName;
 
-    soundEnabled = true;
+    document.getElementById("setup").style.display = "none";
+    document.getElementById("gameContainer").style.display = "block";
 
     yourScore = 0;
     currentRound = 1;
-    document.getElementById("scoreDisplay").innerText = "";
-    document.getElementById("difficultySection").style.display = "none";
-    document.getElementById("gameArea").style.display = "block";
+
     runRound();
+    playClick();
+}
+
+function selectDifficulty(level) {
+    difficulty = level;
+    document.querySelectorAll(".difficulty-button").forEach(btn => btn.classList.remove("selected"));
+    document.getElementById(`${level}Btn`).classList.add("selected");
+    document.getElementById("startBtn").disabled = false;
 }
 
 function runRound() {
     const deck = shuffle(DECK);
     yourCard = deck.pop();
-    document.getElementById("yourCard").innerText = yourCard;
-
     aiPlayers = [];
+
     for (let i = 0; i < 3; i++) {
-        const name = AI_NAMES[i % AI_NAMES.length];
+        const name = AI_NAMES[i + Math.floor(Math.random() * (AI_NAMES.length - 3))];
         const card = deck.pop();
         aiPlayers.push(createAI(name, card, difficulty));
     }
 
-    renderAIQuotes();
-    updateScoreDisplay();
-    document.getElementById("result").innerHTML = `Round ${currentRound} of ${totalRounds}. Place your quote.`;
+    document.getElementById("yourCard").innerText = yourCard;
     document.getElementById("bid").value = "";
     document.getElementById("ask").value = "";
+    document.getElementById("result").innerHTML = `Round ${currentRound} of ${totalRounds}. Place your quote.`;
+
+    renderAIQuotes();
+    updateScoreDisplay();
 }
 
 function renderAIQuotes() {
@@ -126,56 +124,63 @@ function updateScoreDisplay() {
 }
 
 function submitQuote() {
-    playSound(clickSound);
-    const bid = Number(document.getElementById("bid").value);
-    const ask = Number(document.getElementById("ask").value);
+    const bidInput = document.getElementById("bid").value.trim();
+    const askInput = document.getElementById("ask").value.trim();
     const result = document.getElementById("result");
 
-    if (isNaN(bid) || isNaN(ask) || bid >= ask) {
-        alert("Please enter valid bid and ask values (bid must be less than ask).");
+    // ==== Prevent empty or invalid entries ====
+    if (bidInput === "" || askInput === "") {
+        alert("Please enter both a bid and an ask value.");
         return;
     }
 
-    const allBids = aiPlayers.map(p => p.bid).concat(bid);
-    const allAsks = aiPlayers.map(p => p.ask).concat(ask);
-    const highestBid = Math.max(...allBids);
-    const lowestAsk = Math.min(...allAsks);
+    const bid = Number(bidInput);
+    const ask = Number(askInput);
 
-    let output = "";
-    let roundProfit = 0;
-
-    if (highestBid > lowestAsk) {
-        roundProfit = highestBid - lowestAsk;
-        playSound(successSound);
-        output += `
-      <strong>Arbitrage Found!</strong><br>
-      Buy @ ${lowestAsk}, Sell @ ${highestBid}<br>
-      <strong>Profit:</strong> ${roundProfit}<br><br>
-      <em>You exploited the spread successfully!</em>
-    `;
-    } else {
-        output += `
-      No arbitrage this round.<br><br>
-      <em>Quotes overlapped. Either no mistake, or bluff too subtle.</em>
-    `;
+    if (isNaN(bid) || isNaN(ask) || bid >= ask) {
+        alert("Please enter valid numbers. Bid must be less than Ask.");
+        return;
     }
 
+    playClick();
+
+    // ==== Arbitrage Engine ====
+    let roundProfit = 0;
+    let arbitrageFound = false;
+
+    // Only count arbitrage if YOUR quote enables it
+    aiPlayers.forEach(seller => {
+        aiPlayers.forEach(buyer => {
+            if (seller.ask < buyer.bid) {
+                if (bid <= seller.ask && ask >= buyer.bid) {
+                    const profit = buyer.bid - seller.ask;
+                    if (profit > roundProfit) {
+                        roundProfit = profit;
+                        arbitrageFound = true;
+                    }
+                }
+            }
+        });
+    });
+
+    let output = "";
+
+    if (arbitrageFound) {
+        output += `<strong>💰 Arbitrage Opportunity:</strong><br>`;
+        output += `Your quote enabled a profitable buy-sell spread.<br>`;
+        output += `<strong>Profit:</strong> ${roundProfit}<br><br>`;
+        playSuccess();
+    } else {
+        output += `No arbitrage this round.<br><em>Everyone's playing tight or bluffing well.</em>`;
+    }
+
+    // ==== Bluff Feedback ====
     const expected = BASE_EXPECTED_TOTAL - DECK_AVG + yourCard;
     const honestQuote = Math.floor(expected);
     const tooHonest = (bid <= honestQuote - 1 && ask >= honestQuote + 1);
 
     if (tooHonest) {
-        output += `<br><strong>⚠️ Feedback:</strong> Your quote closely matches your card. Be careful not to give away your value.`;
-    }
-
-    // Show bluffing info
-    const bluffingAIs = aiPlayers.filter(p => p.bluffing);
-    if (bluffingAIs.length > 0) {
-        output += `<br><br><strong>🕵️ Bluff Report:</strong><ul>`;
-        bluffingAIs.forEach(p => {
-            output += `<li>${p.name} was bluffing.</li>`;
-        });
-        output += `</ul>`;
+        output += `<br><br><strong>⚠️ Feedback:</strong> Your quote closely matches your card. Be careful not to give away your hand.`;
     }
 
     yourScore += roundProfit;
@@ -191,12 +196,21 @@ function submitQuote() {
 }
 
 function showFinalResult() {
-    const result = document.getElementById("result");
-    result.innerHTML = `
+    document.getElementById("result").innerHTML = `
     <h3>🏁 Game Over</h3>
     <p>Total Profit: <strong>${yourScore}</strong></p>
-    <button onclick="startGame()">🔁 Play Again</button>
+    <button onclick="resetGame()">🔁 Play Again</button>
   `;
+}
+
+function resetGame() {
+    document.getElementById("gameContainer").style.display = "none";
+    document.getElementById("setup").style.display = "block";
+    document.getElementById("playerName").value = "";
+    document.querySelectorAll(".difficulty-button").forEach(btn => btn.classList.remove("selected"));
+    document.getElementById("startBtn").disabled = true;
+    yourScore = 0;
+    playClick();
 }
 
 function showHint() {
@@ -205,23 +219,14 @@ function showHint() {
     const ask = Math.floor(expected + 1);
 
     alert(
-        `📘 HINT\n\n` +
-        `Your card: ${yourCard}\n` +
+        `💡 Hint Based on Your Card (${yourCard})\n\n` +
         `Expected total ≈ ${expected.toFixed(1)}\n` +
         `Neutral quote would be: ${bid}–${ask}\n\n` +
-        `You can quote tighter, bluff, or overprice depending on strategy.\nHide your intent!`
+        `You can quote tighter, bluff, or overprice depending on strategy.\nTry to mask your card!`
     );
 }
 
 function toggleSound() {
-    soundEnabled = !soundEnabled;
-    const btn = document.getElementById("soundToggle");
-    btn.innerText = soundEnabled ? "🔊 Sound On" : "🔇 Sound Off";
-}
-
-function setDifficulty(level) {
-    difficulty = level;
-    const buttons = document.querySelectorAll(".diff-btn");
-    buttons.forEach(btn => btn.classList.remove("selected"));
-    document.getElementById(`${level}Btn`).classList.add("selected");
+    soundMuted = !soundMuted;
+    document.getElementById("muteBtn").innerText = soundMuted ? "🔇 Sound Off" : "🔊 Sound On";
 }
